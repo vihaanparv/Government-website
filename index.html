@@ -39,13 +39,13 @@
         /* Set body to black background and yellow text */
         body[data-contrast="high"] {
             background-color: #000 !important; /* Pure black background */
-            color: #00ff91 !important; /* Bright red text */
+            color: #f1f0f7 !important; /* Bright red text */
         }
         
         /* Apply high contrast rules to most elements */
         body[data-contrast="high"] * {
             color: inherit !important;
-            border-color: #00ffff !important;
+            border-color: #2200ff !important;
             box-shadow: none !important;
             text-shadow: none !important;
             /* Default non-text content to transparent unless explicitly overridden below */
@@ -60,7 +60,7 @@
             background-color: #000 !important;
             border-style: solid !important; /* Ensure borders are visible */
             border-width: 1px !important;
-            border-color: #00ffff !important;
+            border-color: #2200ff !important;
             padding: 20px !important; /* Ensure content spacing is retained */
         }
 
@@ -91,6 +91,14 @@
             
 
 <div class="flex items-center space-x-4">
+                
+                
+
+<!-- Sanskriti School Logo added to the left -->
+                <img src="/Logo.jpg" 
+                     alt="Sanskriti School Undri Pune Logo" 
+                     class="h-12 w-12 rounded-full object-cover shadow-lg hidden sm:block" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/60x60/FFFFFF/4F46E5?text=Logo';" />
                 
                 
 
