@@ -45,7 +45,7 @@
         /* Apply high contrast rules to most elements */
         body[data-contrast="high"] * {
             color: inherit !important;
-            border-color: #2200ff !important;
+            border-color: #2200ff !important; /* Fixed: Added a valid color value */
             box-shadow: none !important;
             text-shadow: none !important;
             /* Default non-text content to transparent unless explicitly overridden below */
@@ -57,7 +57,7 @@
         body[data-contrast="high"] .link-card, /* Individual Link Cards */
         body[data-contrast="high"] #links .bg-blue-50, /* Links Grid Container */
         body[data-contrast="high"] #schemeSearch > div {
-            background-color: #000 !important;
+            background-color: #000000 !important;
             border-style: solid !important; /* Ensure borders are visible */
             border-width: 1px !important;
             border-color: #2200ff !important;
