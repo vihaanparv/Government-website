@@ -34,46 +34,6 @@
                 font-size: 2.5rem; /* Slightly smaller on mobile */
             }
         }
-
-        /* --- High Contrast Mode Styles (Accessibility) --- */
-        /* Set body to black background and yellow text */
-        body[data-contrast="high"] {
-            background-color: #000 !important; /* Pure black background */
-            color: #f1f0f7 !important; /* Bright red text */
-        }
-        
-        /* Apply high contrast rules to most elements */
-        body[data-contrast="high"] * {
-            color: inherit !important;
-            border-color: #2200ff !important; /* Fixed: Added a valid color value */
-            box-shadow: none !important;
-            text-shadow: none !important;
-            /* Default non-text content to transparent unless explicitly overridden below */
-            background-color: transparent !important; 
-        }
-        
-        /* Explicitly set the background of key foreground containers to black for visual separation */
-        body[data-contrast="high"] #aboutContent, /* Set About Section background to black for High Contrast mode */
-        body[data-contrast="high"] .link-card, /* Individual Link Cards */
-        body[data-contrast="high"] #links .bg-blue-50, /* Links Grid Container */
-        body[data-contrast="high"] #schemeSearch > div {
-            background-color: #000000 !important;
-            border-style: solid !important; /* Ensure borders are visible */
-            border-width: 1px !important;
-            border-color: #2200ff !important;
-            padding: 20px !important; /* Ensure content spacing is retained */
-        }
-
-        /* Special handling for header/footer backgrounds which must remain black */
-        body[data-contrast="high"] header, body[data-contrast="high"] footer {
-            background-color: #000 !important;
-            border-bottom: 1px solid #2200ff !important;
-        }
-        
-        /* Ensure links are clearly underlined */
-        body[data-contrast="high"] a {
-            text-decoration: underline !important;
-        }
     </style>
 </head>
 <body class="bg-sky-50 text-gray-800">
@@ -120,7 +80,7 @@
 
 <div class="hidden md:flex space-x-6">
                     <a href="#about" class="text-indigo-200 hover:text-cyan-300 font-medium transition duration-150">About</a>
-                    <a href="#links" class="text-indigo-200 hover:text-cyan-30C:\Users\darel\OneDrive\Documents\PARV\Logo.jpg00 font-medium transition duration-150">Websites</a>
+                    <a href="#links" class="text-indigo-200 hover:text-cyan-300 font-medium transition duration-150">Websites</a>
                     <a href="#schemeSearch" class="text-indigo-200 hover:text-cyan-300 font-medium transition duration-150">Schemes</a>
                 </div>
 
@@ -478,14 +438,6 @@
                 class="bg-indigo-500 text-white font-bold h-10 w-10 rounded-full shadow-md hover:bg-indigo-600 transition duration-300 focus:outline-none flex items-center justify-center text-xl">
                 A-
             </button>
-            <button onclick="toggleContrast()" id="contrastToggleBtn" title="Toggle High Contrast Mode"
-                class="bg-indigo-500 text-white h-10 w-10 rounded-full shadow-md hover:bg-indigo-600 transition duration-300 focus:outline-none flex items-center justify-center">
-                
-
-<svg id="contrastIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                </svg>
-            </button>
         </div>
 
         
@@ -510,7 +462,6 @@
         const FONT_SIZE_MIN = 12;
 
         let currentFontSize = INITIAL_FONT_SIZE_PX;
-        let isContrastOn = false;
 
         // Initialize root font size for relative units (rem)
         ROOT_ELEMENT.style.fontSize = `${INITIAL_FONT_SIZE_PX}px`;
@@ -537,26 +488,6 @@
                 currentFontSize = newSize;
                 ROOT_ELEMENT.style.fontSize = `${currentFontSize}px`;
                 console.log(`New font size: ${currentFontSize}px`);
-            }
-        }
-
-        /**
-         * Toggles High Contrast Mode by manipulating a body data attribute.
-         */
-        function toggleContrast() {
-            const body = document.body;
-            const contrastIcon = document.getElementById('contrastIcon');
-
-            isContrastOn = !isContrastOn;
-            // The CSS relies on this data attribute being present/absent
-            body.dataset.contrast = isContrastOn ? 'high' : '';
-
-            if (isContrastOn) {
-                // Change icon to sun/lightbulb for 'off' state
-                contrastIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>`;
-            } else {
-                // Change icon back to moon for 'on' state (Dark mode/Contrast active)
-                contrastIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>`;
             }
         }
 
@@ -667,7 +598,6 @@
         // Attach functions to the global window object to make them accessible from HTML
         window.toggleAccessibilityToolbar = toggleAccessibilityToolbar;
         window.changeFontSize = changeFontSize;
-        window.toggleContrast = toggleContrast;
         window.scrollToTop = scrollToTop;
         window.filterLinks = filterLinks;
         window.searchSchemes = searchSchemes;
