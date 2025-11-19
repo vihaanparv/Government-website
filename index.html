@@ -34,6 +34,10 @@
                 font-size: 2.5rem; /* Slightly smaller on mobile */
             }
         }
+        .scheme-result-card {
+            border-left: 4px solid var(--tw-color-indigo-600);
+            padding-left: 1rem;
+        }
     </style>
 </head>
 <body class="bg-sky-50 text-gray-800">
@@ -351,8 +355,7 @@
                         class="w-full p-4 text-lg rounded-lg border border-indigo-300 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600 transition duration-200 shadow-md">
                 
                 <div id="schemeResults" class="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg min-h-20 text-gray-600">
-                    
-
+                    <p class="text-center font-medium">Start typing to search for up-to-date Indian Government Schemes...</p>
 </div>
             </div>
         </section>
@@ -512,7 +515,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- Core App Functions ---
+        // --- Core App Functions (Search Logic Updated to use Gemini API) ---
 
         /**
          * Filters the link cards in the main grid based on search input.
@@ -533,66 +536,162 @@
             }
         }
 
+        // --- Gemini API Setup for Scheme Search ---
+        const API_KEY = "AIzaSyB0lvHA2d-OQUpyJt7NlOuQH7B_1x_7IL8"; // Kept empty, provided by runtime
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        const MAX_RETRIES = 5;
+        const SCHEME_RESULTS_CONTAINER = document.getElementById('schemeResults');
+
         /**
-         * Data for prominent government schemes.
+         * Utility function to call the Gemini API with exponential backoff.
          */
-        const schemeData = [
-            { name: "PM Kisan Samman Nidhi", ministry: "Agriculture", details: "Provides income support of ₹6,000 per year to eligible farmer families in three installments." },
-            { name: "Ayushman Bharat - PM-JAY", ministry: "Health", details: "World's largest health assurance scheme, providing a health cover of ₹5 lakh per family per year for secondary and tertiary care hospitalization." },
-            { name: "Pradhan Mantri Ujjwala Yojana (PMUY)", ministry: "Petroleum & Natural Gas", details: "Aims to provide clean cooking fuel (LPG) connections to women from poor households, ensuring better health." },
-            { name: "Beti Bachao Beti Padhao (BBBP)", ministry: "Women & Child Development", details: "A national initiative to address the declining Child Sex Ratio (CSR) and empower girl children." },
-            
-            // This section was previously fixed for the SyntaxError
-            
-            { name: "Jal Jeevan Mission (JJM)", ministry: "Jal Shakti", details: "Aims to provide safe and adequate drinking water through individual household tap connections by 2024 to all rural households." },
-            { name: "Swachh Bharat Abhiyan (SBA)", ministry: "Housing and Urban Affairs", details: "A national campaign for universal sanitation coverage and cleanliness efforts across the country." },
-            { name: "Pradhan Mantri Awas Yojana (PMAY)", ministry: "Housing and Urban Affairs", details: "Provides central assistance to urban and rural poor families for constructing or acquiring houses to ensure Housing for All." },
-        ];
-        
+        async function callGeminiApi(payload, retries = 0) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retries < MAX_RETRIES) {
+                        const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiApi(payload, retries + 1);
+                    }
+                    throw new Error(`API call failed with status: ${response.status}`);
+                }
+
+                return response.json();
+            } catch (error) {
+                if (retries < MAX_RETRIES) {
+                    const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return callGeminiApi(payload, retries + 1);
+                }
+                throw error;
+            }
+        }
+
         /**
-         * Renders the list of schemes into the results container.
+         * Renders the list of schemes into the results container from hardcoded data.
+         * Used for initial display or when search input is too short.
          * @param {Array<Object>} schemes - The filtered array of scheme objects.
          */
         function renderSchemes(schemes) {
-            const resultsContainer = document.getElementById('schemeResults');
-            resultsContainer.innerHTML = ''; // Clear previous results
+            SCHEME_RESULTS_CONTAINER.innerHTML = ''; 
 
             if (schemes.length === 0) {
-                resultsContainer.innerHTML = `<p class="text-center text-red-600 font-medium">No results found for your search. Please try broader terms or ministry names.</p>`;
+                SCHEME_RESULTS_CONTAINER.innerHTML = `<p class="text-center text-red-600 font-medium">No results found in the initial list. Start typing to use the online search.</p>`;
                 return;
             }
             
             schemes.forEach(scheme => {
                 const card = document.createElement('div');
-                card.className = 'p-3 mb-2 border-b border-indigo-300';
+                card.className = 'scheme-result-card p-3 mb-2 border-b border-indigo-300';
                 card.innerHTML = `
                     <p class="font-bold text-gray-900">${scheme.name}</p>
                     <p class="text-sm italic text-indigo-700">Ministry: ${scheme.ministry}</p>
                     <p class="text-sm">${scheme.details}</p>
                 `;
-                resultsContainer.appendChild(card);
+                SCHEME_RESULTS_CONTAINER.appendChild(card);
             });
         }
 
         /**
-         * Searches government schemes and updates the result list.
+         * Data for prominent government schemes (used for initial load/short queries).
          */
-        function searchSchemes() {
-            const input = document.getElementById('schemeSearchInput').value.toLowerCase().trim();
+        const schemeData = [
+            { name: "PM Kisan Samman Nidhi", ministry: "Agriculture", details: "Provides income support of ₹6,000 per year to eligible farmer families." },
+            { name: "Ayushman Bharat - PM-JAY", ministry: "Health", details: "Health assurance scheme, providing a cover of ₹5 lakh per family per year." },
+            { name: "Pradhan Mantri Ujjwala Yojana (PMUY)", ministry: "Petroleum & Natural Gas", details: "Provides clean cooking fuel (LPG) connections to women from poor households." },
+            { name: "Beti Bachao Beti Padhao (BBBP)", ministry: "Women & Child Development", details: "National initiative to address the declining Child Sex Ratio (CSR) and empower girl children." },
+            { name: "Jal Jeevan Mission (JJM)", ministry: "Jal Shakti", details: "Aims to provide safe and adequate drinking water through individual household tap connections by 2024." },
+            { name: "Swachh Bharat Abhiyan (SBA)", ministry: "Housing and Urban Affairs", details: "A national campaign for universal sanitation coverage and cleanliness efforts." },
+            { name: "Pradhan Mantri Awas Yojana (PMAY)", ministry: "Housing and Urban Affairs", details: "Provides central assistance for constructing or acquiring houses to ensure Housing for All." },
+        ];
+        
+        /**
+         * Searches government schemes using the Gemini API for comprehensive, up-to-date results.
+         */
+        async function searchSchemes() {
+            const inputElement = document.getElementById('schemeSearchInput');
+            const input = inputElement.value.toLowerCase().trim();
 
-            if (input.length < 2) {
-                // If input is empty or too short, show the full list
+            // 1. Handle short input - show static list
+            if (input.length < 3) {
                 renderSchemes(schemeData);
                 return;
             }
 
-            const filtered = schemeData.filter(scheme => 
-                scheme.name.toLowerCase().includes(input) || 
-                scheme.details.toLowerCase().includes(input) ||
-                scheme.ministry.toLowerCase().includes(input)
-            );
+            // 2. Show Loading State
+            SCHEME_RESULTS_CONTAINER.innerHTML = `
+                <div class="flex justify-center items-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mr-3"></div>
+                    <span class="text-lg font-semibold text-indigo-700">Searching the web for the latest schemes...</span>
+                </div>
+            `;
+            
+            // 3. Construct API payload
+            const userQuery = `Find the most important and current Indian Government Schemes (GoI) related to: "${input}". Provide the scheme name, the relevant ministry, and a brief, one-sentence summary for each in a list format.`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }], // Enable Google Search grounding
+                systemInstruction: {
+                    parts: [{ text: "You are a concise Government Scheme Search Assistant. List the search results in a clear, formatted markdown list. Do not include any introductory or concluding sentences, only the list of schemes and their details." }]
+                },
+            };
 
-            renderSchemes(filtered);
+            // 4. Call API and Render Results
+            try {
+                const result = await callGeminiApi(payload);
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
+                    let sources = [];
+
+                    // Extract grounding sources
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+
+                    // Render main result text
+                    SCHEME_RESULTS_CONTAINER.innerHTML = `<div class="prose max-w-none">${text}</div>`;
+
+                    // Render sources/citations if available
+                    if (sources.length > 0) {
+                        const sourcesHtml = sources.slice(0, 3).map((s, index) => 
+                            `<a href="${s.uri}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline">${s.title}</a>`
+                        ).join(', ');
+
+                        const citationDiv = document.createElement('div');
+                        citationDiv.className = 'mt-4 pt-3 border-t border-indigo-200 text-xs text-gray-500';
+                        citationDiv.innerHTML = `**Sources:** ${sourcesHtml} (Results generated using Gemini and Google Search.)`;
+                        SCHEME_RESULTS_CONTAINER.appendChild(citationDiv);
+                    } else {
+                         // Fallback note if no citations are returned but text is
+                         const citationDiv = document.createElement('div');
+                         citationDiv.className = 'mt-4 pt-3 border-t border-indigo-200 text-xs text-gray-500';
+                         citationDiv.innerHTML = `(Results generated using Gemini and Google Search. The model attempts to find the latest data.)`;
+                         SCHEME_RESULTS_CONTAINER.appendChild(citationDiv);
+                    }
+
+
+                } else {
+                    SCHEME_RESULTS_CONTAINER.innerHTML = `<p class="text-center text-red-600 font-medium">Search failed or no relevant schemes were found. Please refine your query.</p>`;
+                }
+            } catch (error) {
+                console.error("Scheme search error:", error);
+                SCHEME_RESULTS_CONTAINER.innerHTML = `<p class="text-center text-red-600 font-medium">An error occurred during the search. Please check your connection and try again.</p>`;
+            }
         }
 
         // Attach functions to the global window object to make them accessible from HTML
@@ -604,7 +703,7 @@
 
         // --- Initialization on Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Display the full list of schemes initially
+            // Display the hardcoded list of schemes initially if the search box is empty
             renderSchemes(schemeData);
         });
     </script>
